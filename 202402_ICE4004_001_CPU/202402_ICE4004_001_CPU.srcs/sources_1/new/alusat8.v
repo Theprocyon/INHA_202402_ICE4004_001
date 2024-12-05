@@ -6,7 +6,10 @@ module alusat8(
     input [7:0] b,       // Second operand
     input mode,          // Mode: 0 for addition, 1 for subtraction
     output reg [7:0] result // Saturated result
-);wire [8:0] sum = {1'b0, a} + {1'b0, b};
+);
+
+
+wire [8:0] sum = {1'b0, a} + {1'b0, b};
 
 always @(*) begin
     if (mode == 1'b0) begin

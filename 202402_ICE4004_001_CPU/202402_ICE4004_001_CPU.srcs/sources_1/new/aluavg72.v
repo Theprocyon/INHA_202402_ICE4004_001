@@ -1,3 +1,6 @@
+// file: ALU.v
+// author: theprocyon
+
 module aluavg72(
     input [71:0] in,        // 72-bit input
     output [31:0] avg_out   // 32-bit unsigned average output

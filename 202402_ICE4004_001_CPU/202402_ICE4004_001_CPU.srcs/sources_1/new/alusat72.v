@@ -2,7 +2,7 @@
 
 module alusat72(
     input [71:0] a,        // First 72-bit operand
-    input [71:0] b,        // Second 72-bit operand
+    input [7:0] b,        // imm value
     input mode,            // Mode: 0 for addition, 1 for subtraction
     output [71:0] result   // 72-bit Saturated result
 );
@@ -15,10 +15,10 @@ module alusat72(
     generate
         for (i = 0; i < 9; i = i + 1) begin : saturating_units
             alusat8 u_saturating_add_sub (
-                .a(a[i*8 +: 8]),     // Extract 8-bit chunk from 'a'
-                .b(b[i*8 +: 8]),     // Extract 8-bit chunk from 'b'
-                .mode(mode),         // Operation mode
-                .result(res[i])      // 8-bit result
+                .a(a[i*8 +: 8]),        // Extract 8-bit chunk from 'a'
+                .b(b),                  // imm value
+                .mode(mode),            // Operation mode
+                .result(res[i])         // 8-bit result
             );
         end
     endgenerate
