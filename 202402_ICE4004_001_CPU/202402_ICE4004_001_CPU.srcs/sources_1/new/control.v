@@ -3,28 +3,6 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2024/12/06 00:14:42
-// Design Name: 
-// Module Name: control
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
 // Create Date: 2024/12/05 14:42:35
 // Design Name: 
 // Module Name: FSM_processor
@@ -46,13 +24,28 @@ module control (
     input clk,           // Clock signal
     input reset,         // Reset signal
     input [5:0] opcode,  // 6bit Operation code (e.g., ADD, SUB, LOAD, STORE, MOVS)
-    // ADD: 6'b000000 (0)
-    // SUB: 6'b000001 (1)
-    // ADDI: 6'b011000 (24)
-    // SUBI: 6'b011001 (25)
-    // LOAD: 6'b011010 (26)
-    // STORE: 6'b011011 (27)
-    // MOVS: 6'b011100 (28)
+    
+    //k// ADD           : 6'b000000 (0)     implemented
+    //k// SUB           : 6'b000001 (1)     implemented
+    //p// CMP           : 6'b000010 (2)     .
+    //p// MUL           : 6'b000011 (3)     .
+    //p// BN            : 6'b010000 (16)    .
+    //p// BEQ           : 6'b010001 (17)    .
+    //k// ADDI          : 6'b011000 (24)    implemented
+    //k// SUBI          : 6'b011001 (25)    implemented
+    //k// LOAD          : 6'b011010 (26)    implemented
+    //k// STORE         : 6'b011011 (27)    implemented
+    //k// MOVS          : 6'b011100 (28)    implemented
+    //p// LSL           : 6'b011101 (29)    .
+    //p// RSL           : 6'b011110 (30)    .
+    //p// MULI          : 6'b011111 (31)    .
+    //s// GADD9B        : 6'b100000 (32)    .
+    //s// GSUB9B        : 6'b100001 (33)    .
+    //s// GSTORE9B      : 6'b100010 (34)    .
+    //s// GLOAD9B       : 6'b100011 (35)    .
+    //s// GAVG9B        : 6'b100100 (36)    .
+
+
     
     output reg [1:0] DataSrcSel, // 00 01 10
     output reg PCWrite,
@@ -73,18 +66,26 @@ module control (
 );
 
     // Define FSM states
-    parameter s0 = 4'b0000; // Fetch
-    parameter s1 = 4'b0001; // Decode
-    parameter s2 = 4'b0010; // Execute ADD/SUB
-    parameter s3 = 4'b0011; // Write Back ADD/SUB
-    parameter s4 = 4'b0100; // Execute ADDI/SUBI
-    parameter s5 = 4'b0101; // Write Back ADDI/SUBI
-    parameter s6 = 4'b0110; // Execute STORE/LOAD
-    parameter s7 = 4'b0111; // Memory Write (STORE)
-    parameter s8 = 4'b1000; // Memory Read (LOAD)
-    parameter s9 = 4'b1001; // Write Back (LOAD)
-    parameter s10 = 4'b1010; // Execute MOVS
-    parameter s11 = 4'b1011; // Write Back MOVS
+    localparam s0  = 4'b00000; // Fetch                     //k//
+    localparam s1  = 4'b00001; // Decode                    //k//
+    localparam s2  = 4'b00010; // Execute ADD/SUB           //k//
+    localparam s3  = 4'b00011; // Write Back ADD/SUB        //k//
+    localparam s4  = 4'b00100; // Execute ADDI/SUBI         //k//
+    localparam s5  = 4'b00101; // Write Back ADDI/SUBI      //k//
+    localparam s6  = 4'b00110; // Execute STORE/LOAD        //k//
+    localparam s7  = 4'b00111; // Memory Write (STORE)      //k//
+    localparam s8  = 4'b01000; // Memory Read (LOAD)        //k//
+    localparam s9  = 4'b01001; // Write Back (LOAD)         //k//
+    localparam s10 = 4'b01010; // Execute MOVS              //k//
+    localparam s11 = 4'b01011; // Write Back MOVS           //k//
+    localparam s12 = 4'b01100; // Shift                     //p//
+    localparam s13 = 4'b01101; // UXTB                      //p//
+    localparam s14 = 4'b01110; // CPY                       //p//
+    localparam s15 = 4'b01111; // MULI                      //p//
+    localparam s16 = 4'b10000; // BN                        //p//
+    localparam s17 = 4'b10001; // (WB)                      //p//
+    localparam s18 = 4'b10010; // BN_TRUE                   //p//
+    localparam s19 = 4'b10011; // BN_FALSE                  //p//
 
     reg [3:0] current_state, next_state;
 
