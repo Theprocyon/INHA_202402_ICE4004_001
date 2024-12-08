@@ -6,7 +6,7 @@ module tb_cache;
     reg clk;
     reg write_enable;
     reg read_enable;
-    reg [7:0] address;
+    reg [31:0] address;
     reg [31:0] write_data;
 
     // Outputs

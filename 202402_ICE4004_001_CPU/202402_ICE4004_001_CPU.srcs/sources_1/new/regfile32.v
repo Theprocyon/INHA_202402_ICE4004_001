@@ -14,7 +14,7 @@ module regfile32 (
     input wire reset,
     input wire [1:0] control,       // 2-bit control signal
     input wire [31:0] input_data0,  // Input data for port 0
-    input wire [4:0] input_addr0,  // Input data for port 0
+    input wire [4:0] input_addr2,  // Input data for port 0
     input wire [31:0] input_data1,  // Input data for port 1
     input wire [31:0] input_data2,  // Input data for port 2
     input wire [4:0] output_addr1,  // output addr 1
@@ -35,9 +35,9 @@ module regfile32 (
     assign read_addr2 = (control == 2'd2) ? 5'd1 : output_addr1; 
     assign read_addr3 = (control == 2'd2) ? 5'd2 : output_addr2; 
 
-    assign write_addr1 = (control == 2'd1) ? input_addr0 : 5'd0;  
+    assign write_addr1 = 5'd0;  
     assign write_addr2 = 5'd1;     
-    assign write_addr3 = 5'd2;     
+    assign write_addr3 = (control == 2'd1) ? input_addr2 : 5'd2;     
 
     // Data mapping
     assign write_data1 = input_data0; 
@@ -45,9 +45,9 @@ module regfile32 (
     assign write_data3 = input_data2; 
 
     // Write enable logic
-    assign write_enable1 = (control == 2'd1) || (control == 2'd3);
+    assign write_enable1 = (control == 2'd3);
     assign write_enable2 = (control == 2'd3);                     
-    assign write_enable3 = (control == 2'd3);                     
+    assign write_enable3 = (control == 2'd1) ||  (control == 2'd3);                     
 
     // Instantiate reg_file
     regfile3i3o32b u_reg_file (
