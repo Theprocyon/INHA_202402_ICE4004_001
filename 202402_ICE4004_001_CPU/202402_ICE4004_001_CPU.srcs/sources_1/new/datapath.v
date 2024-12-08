@@ -2,7 +2,8 @@
 
 module datapath(
     input clk, 
-    input rst
+    input rst,
+    output [4:0] state
     );
 
     //Control Signals
@@ -22,7 +23,6 @@ module datapath(
     wire [1:0]  ALUSel;
     wire        ZRegWrite;
     wire [1:0]  PCSrc;
-
 
 
     //flags
@@ -173,7 +173,11 @@ module datapath(
     wire [31:0] RegFile_to_rs0;
     wire [31:0] RegFile_to_rs1;
     wire [31:0] RegFile_to_rs2;
-
+    
+    
+    wire [31:0] xreg_out;
+    wire [31:0] yreg_out;
+    
     regfile32 RegFile(
         .clk(clk),
         .reset(rst),
@@ -206,7 +210,7 @@ module datapath(
 
     wire [31:0] rs1_Out;
 
-    reg32 Reg_rs0 (
+    reg32 Reg_rs1 (
         .clk(clk),
         .rst(rst),
         .we(1'b1),
@@ -219,7 +223,7 @@ module datapath(
 
     wire [31:0] rs2_Out;
 
-    reg32 Reg_rs0 (
+    reg32 Reg_rs2 (
         .clk(clk),
         .rst(rst),
         .we(1'b1),
@@ -233,7 +237,7 @@ module datapath(
 
     wire [71:0] alusat_a;
 
-    assign alusat_a     = {rs0, rs1, rs2[7:0]};
+    assign alusat_a     = {rs0_Out, rs1_Out, rs2_Out[7:0]};
     assign imm_trunc8   = imm[7:0];
 
     wire [71:0] alusat_out;
@@ -291,7 +295,7 @@ module datapath(
     assign SE_imm = {24'b0, imm};
     assign SE_imm_x4 = SE_imm << 2;
     
-    mux4_32 MUX_ALUSrcX(
+    mux4_32 MUX_ALUSrcY(
         .in0(32'd4),
         .in1(rs2_Out),
         .in2(SE_imm),
@@ -331,8 +335,6 @@ module datapath(
 
     //x reg
 
-    wire [31:0] xreg_out;
-
     reg32 xreg(
         .clk(clk),
         .rst(rst),
@@ -344,8 +346,6 @@ module datapath(
 
     //y reg
 
-    wire [31:0] yreg_out;
-
     reg32 yreg(
         .clk(clk),
         .rst(rst),
@@ -355,8 +355,6 @@ module datapath(
     );
 
     //z reg
-
-    wire [31:0] ZReg_Out;
 
     reg32 zreg(
         .clk(clk),
@@ -368,8 +366,6 @@ module datapath(
 
 
     //MUX_PCSrc
-
-    wire [31:0] PCSrc_out;
     wire PCSrc_jta;
 
     assign PCSrc_jta = {PC_to_MUX[31:28], jta, 2'b00};
@@ -380,7 +376,38 @@ module datapath(
         .in2(ZReg_Out),
         .in3(ALUSel_out),
         .sel(PCSrc),
-        .out(PCSrc_out)
+        .out(MUX_to_PC)
+    );
+
+    //control
+
+    control multicycle_control(
+
+        //inputs
+        .clk(clk),
+        .reset(rst),
+        .opcode(opcode),
+        .zero(zero),
+
+        //outputs
+        .DataSrcSel(DataSrcSel),
+        .PCWrite(PCWrite),
+        .InstData(InstData),
+        .MemRead(MemRead),
+        .MemWrite(MemWrite),
+        .IRWrite(IRWrite),
+        .RegDst(RegDst),
+        .RegInSrc(RegInSrc),
+        .RegWriteMode(RegWriteMode),
+        .ALUSrcX(ALUSrcX),
+        .ALUSrcY(ALUSrcY),
+        .ALUFunc(ALUFunc),
+        .ALUSel(ALUSel),
+        .GADDSUB(GADDSUB),
+        .ZRegWrite(ZRegWrite),
+        .PCSrc(PCSrc),
+        
+        .state(state)
     );
 
 

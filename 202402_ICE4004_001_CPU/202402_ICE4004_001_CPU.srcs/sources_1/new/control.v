@@ -67,7 +67,9 @@ module control (
     output reg [1:0] ALUSel, // 00 01 10
     output reg GADDSUB,
     output reg ZRegWrite,
-    output reg [1:0] PCSrc // 00 01 10 11
+    output reg [1:0] PCSrc, // 00 01 10 11
+    
+    output [4:0] state
 );
 
     // Define FSM states
@@ -92,7 +94,7 @@ module control (
     localparam s18 = 5'b10010; // BN_TRUE                   //p//
     localparam s19 = 5'b10011; // BN_FALSE                  //p//
 
-    reg [3:0] current_state, next_state;
+    reg [4:0] current_state, next_state;
 
     // State transition logic
     always @(posedge clk or posedge reset) begin
@@ -101,6 +103,8 @@ module control (
         else 
             current_state <= next_state;
     end
+    
+    assign state = current_state;
 
     // Output and next state logic
     always @(*) begin
@@ -169,16 +173,18 @@ module control (
             end
 
             s4: begin // Execute ADDI/SUBI
-                // ALUSrcX = 2'b01;
-                // ALUSrcY = 2'b10;
-                // ALUFunc = (opcode == 6'b011000) ? 2'b00 : 2'b01; // 6'b011000: ADDI, ADD(00) SUB(01)
+                ALUSel = 2'b00;
+                ALUSrcX = 2'b01;
+                ALUSrcY = 2'b10;
+                ALUFunc = (opcode == 6'b011000) ? 2'b00 : 2'b01; // 6'b011000: ADDI, ADD(00) SUB(01)
+                ZRegWrite = 1;
                 next_state = s5;
             end
 
             s5: begin // Write Back ADDI/SUBI
-                // RegDst = 3'b000;
-                // RegInSrc = 2'b01;
-                // RegWriteMode = 2'b01;
+                RegDst = 3'b000;
+                RegInSrc = 2'b01;
+                RegWriteMode = 2'b01;
                 next_state = s0;
             end
 

@@ -9,8 +9,8 @@ module cache (
     output reg [31:0] read_data
 );
 
-    wire [7:0] address_trunc; //Get 8bit LSB from addr
-    assign address_trunc = address[7:0];
+    wire [29:0] address_trunc; //Get 8bit LSB from addr
+    assign address_trunc = address >> 2;
 
     // Declare the register file
     reg [31:0] registers [255:0];  // 256 x 32-bit registers
