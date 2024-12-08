@@ -31,6 +31,10 @@ module cache (
     // Declare the register file
     reg [31:0] registers [255:0];  // 256 x 32-bit registers
 
+    initial begin
+        $readmemb("Insts.mem", registers);
+    end
+
     always @(posedge clk) begin
         if (write_enable) begin
             registers[address] <= write_data;  // Write operation

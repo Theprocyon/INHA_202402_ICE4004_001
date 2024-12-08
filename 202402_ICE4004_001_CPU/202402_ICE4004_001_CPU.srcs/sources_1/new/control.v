@@ -24,7 +24,7 @@ module control (
     input clk,           // Clock signal
     input reset,         // Reset signal
     input [5:0] opcode,  // 6bit Operation code (e.g., ADD, SUB, LOAD, STORE, MOVS)
-    
+    input zero,          // Zero for beq
     //k// ADD           : 6'b000000 (0)     implemented
     //k// SUB           : 6'b000001 (1)     implemented
     //p// CMP           : 6'b000010 (2)     .
@@ -59,6 +59,11 @@ module control (
     output reg [1:0] ALUSrcX, // 00 01 10
     output reg [1:0] ALUSrcY, // 00 01 10 11
     output reg [3:0] ALUFunc, // 0(+) 1(-)
+    //4'b0000:// ADD
+    //4'b0001:// SUB
+    //4'b0010:// SLL
+    //4'b0011:// SRL
+    //4'b0100:// MUL
     output reg [1:0] ALUSel, // 00 01 10
     output reg GADDSUB,
     output reg ZRegWrite,
@@ -66,26 +71,26 @@ module control (
 );
 
     // Define FSM states
-    localparam s0  = 4'b00000; // Fetch                     //k//
-    localparam s1  = 4'b00001; // Decode                    //k//
-    localparam s2  = 4'b00010; // Execute ADD/SUB           //k//
-    localparam s3  = 4'b00011; // Write Back ADD/SUB        //k//
-    localparam s4  = 4'b00100; // Execute ADDI/SUBI         //k//
-    localparam s5  = 4'b00101; // Write Back ADDI/SUBI      //k//
-    localparam s6  = 4'b00110; // Execute STORE/LOAD        //k//
-    localparam s7  = 4'b00111; // Memory Write (STORE)      //k//
-    localparam s8  = 4'b01000; // Memory Read (LOAD)        //k//
-    localparam s9  = 4'b01001; // Write Back (LOAD)         //k//
-    localparam s10 = 4'b01010; // Execute MOVS              //k//
-    localparam s11 = 4'b01011; // Write Back MOVS           //k//
-    localparam s12 = 4'b01100; // Shift                     //p//
-    localparam s13 = 4'b01101; // UXTB                      //p//
-    localparam s14 = 4'b01110; // CPY                       //p//
-    localparam s15 = 4'b01111; // MULI                      //p//
-    localparam s16 = 4'b10000; // BN                        //p//
-    localparam s17 = 4'b10001; // (WB)                      //p//
-    localparam s18 = 4'b10010; // BN_TRUE                   //p//
-    localparam s19 = 4'b10011; // BN_FALSE                  //p//
+    localparam s0  = 5'b00000; // Fetch                     //k//
+    localparam s1  = 5'b00001; // Decode                    //k//
+    localparam s2  = 5'b00010; // Execute ADD/SUB           //k//
+    localparam s3  = 5'b00011; // Write Back ADD/SUB        //k//
+    localparam s4  = 5'b00100; // Execute ADDI/SUBI         //k//
+    localparam s5  = 5'b00101; // Write Back ADDI/SUBI      //k//
+    localparam s6  = 5'b00110; // Execute STORE/LOAD        //k//
+    localparam s7  = 5'b00111; // Memory Write (STORE)      //k//
+    localparam s8  = 5'b01000; // Memory Read (LOAD)        //k//
+    localparam s9  = 5'b01001; // Write Back (LOAD)         //k//
+    localparam s10 = 5'b01010; // Execute MOVS              //k//
+    localparam s11 = 5'b01011; // Write Back MOVS           //k//
+    localparam s12 = 5'b01100; // Shift                     //p//
+    localparam s13 = 5'b01101; // UXTB                      //p//
+    localparam s14 = 5'b01110; // CPY                       //p//
+    localparam s15 = 5'b01111; // MULI                      //p//
+    localparam s16 = 5'b10000; // BN                        //p//
+    localparam s17 = 5'b10001; // (WB)                      //p//
+    localparam s18 = 5'b10010; // BN_TRUE                   //p//
+    localparam s19 = 5'b10011; // BN_FALSE                  //p//
 
     reg [3:0] current_state, next_state;
 
@@ -124,7 +129,7 @@ module control (
                 IRWrite = 1;
                 ALUSrcX = 2'b00;
                 ALUSrcY = 2'b00;
-                ALUFunc = 2'b00; // 00(+)
+                ALUFunc = 4'b0000; // 00(+)    //4'b0000:// ADD
                 PCSrc = 2'b11;
                 PCWrite = 1;
                 ALUSel = 2'b00;
@@ -132,10 +137,7 @@ module control (
              end
 
             s1: begin // Decode
-                ALUSrcX = 2'b00;
-                ALUSrcY = 2'b00;
-                ALUFunc = 2'b00; // 00(+)
-                RegWriteMode = 2'b00;
+                IRWrite = 0;
                 // ADD: 6'b000000 (0)
                 // SUB: 6'b000001 (1)
                 // ADDI: 6'b011000 (24)
@@ -150,9 +152,11 @@ module control (
             end
 
             s2: begin // Execute ADD/SUB
+                ALUSel = 2'b00;
                 ALUSrcX = 2'b01;
                 ALUSrcY = 2'b01;
-                ALUFunc = (opcode == 6'b000000) ? 2'b00 : 2'b01; // 6'b000000: ADD, ADD(00) SUB(01)
+                ALUFunc = (opcode == 6'b000000) ? 4'b0000 : 4'b0001; // 6'b000000: ADD, ADD(00) SUB(01)
+                ZRegWrite = 1;
                 next_state = s3;
             end
 
@@ -164,61 +168,107 @@ module control (
             end
 
             s4: begin // Execute ADDI/SUBI
-                ALUSrcX = 2'b01;
-                ALUSrcY = 2'b10;
-                ALUFunc = (opcode == 6'b011000) ? 2'b00 : 2'b01; // 6'b011000: ADDI, ADD(00) SUB(01)
+                // ALUSrcX = 2'b01;
+                // ALUSrcY = 2'b10;
+                // ALUFunc = (opcode == 6'b011000) ? 2'b00 : 2'b01; // 6'b011000: ADDI, ADD(00) SUB(01)
                 next_state = s5;
             end
 
             s5: begin // Write Back ADDI/SUBI
-                RegDst = 3'b000;
-                RegInSrc = 2'b01;
-                RegWriteMode = 2'b01;
+                // RegDst = 3'b000;
+                // RegInSrc = 2'b01;
+                // RegWriteMode = 2'b01;
                 next_state = s0;
             end
 
             s6: begin // Execute STORE/LOAD
-                ALUSrcX = 2'b01;
-                ALUSrcY = 2'b10;
-                ALUFunc = 2'b00; // ADD(00)
-                ALUSel = 2'b00;
-                ZRegWrite = 1;
+                // ALUSrcX = 2'b01;
+                // ALUSrcY = 2'b10;
+                // ALUFunc = 2'b00; // ADD(00)
+                // ALUSel = 2'b00;
+                // ZRegWrite = 1;
                 next_state = (opcode == 6'b011010) ? s7 : s8; // 6'b011010: STORE
             end
 
             s7: begin // Memory Write (STORE)
-                InstData = 2'b01;
-                MemWrite = 1;
-                DataSrcSel = 2'b00;
+                // InstData = 2'b01;
+                // MemWrite = 1;
+                // DataSrcSel = 2'b00;
                 next_state = s0;
             end
 
             s8: begin // Memory Read (LOAD)
-                InstData = 2'b01;
-                MemWrite = 1;
+                // InstData = 2'b01;
+                // MemWrite = 1;
                 next_state = s9;
             end
 
             s9: begin // Write Back (LOAD)
-                RegDst = 3'b000;
-                RegInSrc = 2'b00;
-                RegWriteMode = 2'b01;
+                // RegDst = 3'b000;
+                // RegInSrc = 2'b00;
+                // RegWriteMode = 2'b01;
                 next_state = s0;
             end
 
             s10: begin // Execute MOVS
-                ALUSrcX = 2'b10;
-                ALUSrcY = 2'b10;
-                ALUFunc = 2'b00; // ADD(00)
-                ALUSel = 2'b00;
-                ZRegWrite = 1;
+                // ALUSrcX = 2'b10;
+                // ALUSrcY = 2'b10;
+                // ALUFunc = 2'b00; // ADD(00)
+                // ALUSel = 2'b00;
+                // ZRegWrite = 1;
                 next_state = s11;
             end
             
             s11: begin // Write Back MOVS
-                RegDst = 3'b001;
-                RegInSrc = 2'b01;
-                RegWriteMode = 2'b01;
+                // RegDst = 3'b001;
+                // RegInSrc = 2'b01;
+                // RegWriteMode = 2'b01;
+                next_state = s0;
+            end
+
+            s12: begin // Shift
+                // ALUFunc = 'LSL or RSR';
+                // ALUSrcX = 1;
+                // ALUSrcY = 3;
+                // AluSel = 0;
+                // ZRegWrite = 1;
+
+                next_state = s17;
+            end
+
+            s13: begin // UXTB
+                // ALUFunc = 'UXTB';
+                // ALUSrcX = 1;
+                // ALUSrcY = 3;
+                // AluSel = 0;
+                // ZRegWrite = 1;
+                next_state = s0;
+            end
+            s14: begin // CPY     
+                // ALUFunc = 'NOP, pass the source reg';
+                // ALUSrcX = 1;
+                // AluSel = 0;
+                // ZRegWrite = 1;
+                next_state = s0;
+            end
+            s15: begin // MULI    
+                next_state = s0;
+            end
+            s16: begin // BN      
+                next_state = s0;
+            end
+            s17: begin // (WB)    
+
+                // RegDst = 1;
+                // RegInSrc = 1;
+                // RegWrite = 1;
+
+                next_state = s0;
+            end
+            s18: begin // BN_TRUE 
+                next_state = s0;
+            end
+            s19: begin // BN_FALSE
                 next_state = s0;
             end
 
