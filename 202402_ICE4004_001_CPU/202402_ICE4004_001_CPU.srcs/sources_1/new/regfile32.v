@@ -2,7 +2,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 //
 //  0 : idle (아무것도 안함. 출력은 하나, write 하지 않음)
-//  1 : 0번 input 포트의 write enable
+//  1 : 2번 input 포트의 write enable
 //  2 : 1번, 2번 출력 포트의 read address 는 각각 1번, 2번 레지스터를 가리킴.
 //  3 : 모든 포트의 write enable
 //
@@ -31,13 +31,13 @@ module regfile32 (
     wire write_enable1, write_enable2, write_enable3;
 
     // Address mapping
-    assign read_addr1 = 5'd0;       
-    assign read_addr2 = (control == 2'd2) ? 5'd1 : output_addr1; 
-    assign read_addr3 = (control == 2'd2) ? 5'd2 : output_addr2; 
+    assign read_addr1 = 5'd0;
+    assign read_addr2 = (control == 2'd2) ? 5'd1 : output_addr1;
+    assign read_addr3 = (control == 2'd2) ? 5'd2 : output_addr2;
 
-    assign write_addr1 = 5'd0;  
-    assign write_addr2 = 5'd1;     
-    assign write_addr3 = (control == 2'd1) ? input_addr2 : 5'd2;     
+    assign write_addr1 = 5'd0;
+    assign write_addr2 = 5'd1;
+    assign write_addr3 = (control == 2'd1) ? input_addr2 : 5'd2;
 
     // Data mapping
     assign write_data1 = input_data0; 

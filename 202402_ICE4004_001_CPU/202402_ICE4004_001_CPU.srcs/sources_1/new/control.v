@@ -54,7 +54,7 @@ module control (
     output reg MemWrite,
     output reg IRWrite,
     output reg [2:0] RegDst, // 000 001 010 011 100
-    output reg [1:0] RegInSrc, // 00 01
+    output reg       RegInSrc, // 0 1
     output reg [1:0] RegWriteMode, // 00 01 10 11
     output reg [1:0] ALUSrcX, // 00 01 10
     output reg [1:0] ALUSrcY, // 00 01 10 11
@@ -97,8 +97,8 @@ module control (
     reg [4:0] current_state, next_state;
 
     // State transition logic
-    always @(posedge clk or posedge reset) begin
-        if (reset) 
+    always @(posedge clk or negedge reset) begin
+        if (!reset) 
             current_state <= s0; // reset to Fetch state
         else 
             current_state <= next_state;
@@ -116,7 +116,7 @@ module control (
         MemWrite = 0;
         IRWrite = 0;
         RegDst = 3'b000;
-        RegInSrc = 2'b00;
+        RegInSrc = 1'b0;
         RegWriteMode = 2'b00;
         ALUSrcX = 2'b00;
         ALUSrcY = 2'b00;
@@ -167,7 +167,7 @@ module control (
 
             s3: begin // Write Back ADD/SUB
                 RegDst = 3'b001;
-                RegInSrc = 2'b01;
+                RegInSrc = 1'b1;
                 RegWriteMode = 2'b01;
                 next_state = s0;
             end
@@ -183,7 +183,7 @@ module control (
 
             s5: begin // Write Back ADDI/SUBI
                 RegDst = 3'b000;
-                RegInSrc = 2'b01;
+                RegInSrc = 1'b1;
                 RegWriteMode = 2'b01;
                 next_state = s0;
             end

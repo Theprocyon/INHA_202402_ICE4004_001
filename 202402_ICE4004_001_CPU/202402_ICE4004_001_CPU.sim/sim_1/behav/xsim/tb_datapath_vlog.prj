@@ -18,6 +18,7 @@ verilog xil_defaultlib  \
 "../../../../202402_ICE4004_001_CPU.srcs/sim_1/new/tb_alusat72.v" \
 "../../../../202402_ICE4004_001_CPU.srcs/sim_1/new/tb_cache.v" \
 "../../../../202402_ICE4004_001_CPU.srcs/sim_1/new/tb_datapath.v" \
+"../../../../202402_ICE4004_001_CPU.srcs/sim_1/new/tb_regfile32.v" \
 
 # compile glbl module
 verilog xil_defaultlib "glbl.v"

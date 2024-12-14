@@ -10,8 +10,8 @@ module reg32 (
 );
 
     // Always block to update register value on the positive edge of clock
-    always @(posedge clk or posedge rst) begin
-        if (rst) begin
+    always @(posedge clk or negedge rst) begin
+        if (!rst) begin
             q <= 32'b0;  // Reset the register value to 0
         end else if (we) begin
             q <= d;      // Load the input value into the register if write enable is high
