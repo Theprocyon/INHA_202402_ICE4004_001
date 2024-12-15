@@ -33,11 +33,11 @@ module control (
     //p// BEQ           : 6'b010001 (17)    .
     //k// ADDI          : 6'b011000 (24)    implemented
     //k// SUBI          : 6'b011001 (25)    implemented
-    //k// LOAD          : 6'b011010 (26)    implemented
-    //k// STORE         : 6'b011011 (27)    implemented
-    //k// MOVS          : 6'b011100 (28)    implemented
-    //p// LSL           : 6'b011101 (29)    .
-    //p// RSL           : 6'b011110 (30)    .
+    //k// LOAD          : 6'b011010 (26)    .
+    //k// STORE         : 6'b011011 (27)    .
+    //k// MOVS          : 6'b011100 (28)    .
+    //p// LSL           : 6'b011101 (29)    implemented
+    //p// RSL           : 6'b011110 (30)    implemented
     //p// MULI          : 6'b011111 (31)    .
     //s// GADD9B        : 6'b100000 (32)    .
     //s// GSUB9B        : 6'b100001 (33)    .
@@ -86,7 +86,6 @@ module control (
     localparam s10 = 5'b01010; // Execute MOVS              //k//
     localparam s11 = 5'b01011; // Write Back MOVS           //k//
     localparam s12 = 5'b01100; // Shift                     //p//
-    localparam s13 = 5'b01101; // UXTB                      //p//
     localparam s14 = 5'b01110; // CPY                       //p//
     localparam s15 = 5'b01111; // MULI                      //p//
     localparam s16 = 5'b10000; // BN                        //p//
@@ -150,10 +149,16 @@ module control (
                 // LOAD: 6'b011010 (26)
                 // STORE: 6'b011011 (27)
                 // MOVS: 6'b011100 (28)
-                next_state = (opcode == 6'b000000 | opcode == 6'b000001) ? s2 : // Execute ADD/SUB
-                             (opcode == 6'b011000 | opcode == 6'b011001) ? s4 : // Execute ADDI/SUBI
-                             (opcode == 6'b011010 | opcode == 6'b011011) ? s6 : // Execute STORE/LOAD 
-                             (opcode == 6'b011100) ? s10 : s0; // Execute MOVS, default: FETCH
+                case (opcode)
+                    6'b000000, 6'b000001: next_state = s2;  // Execute ADD/SUB
+                    6'b011000, 6'b011001: next_state = s4;  // Execute ADDI/SUBI
+                    6'b011010, 6'b011011: next_state = s6;  // Execute STORE/LOAD
+                    6'b011101, 6'b011110: next_state = s12; // LSL, LSR
+                    6'b011111           : next_state = s15; // MULI
+                    6'b000011           : next_state = s17; // MUL
+                    6'b011100           : next_state = s10; // Execute MOVS
+                    default: next_state = s0;               // Default: FETCH
+                endcase
             end
 
             s2: begin // Execute ADD/SUB
@@ -165,7 +170,7 @@ module control (
                 next_state = s3;
             end
 
-            s3: begin // Write Back ADD/SUB
+            s3: begin // Write Back Reg ALU Inst
                 RegDst = 3'b001;
                 RegInSrc = 1'b1;
                 RegWriteMode = 2'b01;
@@ -176,12 +181,12 @@ module control (
                 ALUSel = 2'b00;
                 ALUSrcX = 2'b01;
                 ALUSrcY = 2'b10;
-                ALUFunc = (opcode == 6'b011000) ? 2'b00 : 2'b01; // 6'b011000: ADDI, ADD(00) SUB(01)
+                ALUFunc = (opcode == 6'b011000) ? 4'b0000 : 4'b0001; // 6'b011000: ADDI, ADD(00) SUB(01)
                 ZRegWrite = 1;
                 next_state = s5;
             end
 
-            s5: begin // Write Back ADDI/SUBI
+            s5: begin // Write Back Imm ALU Inst.
                 RegDst = 3'b000;
                 RegInSrc = 1'b1;
                 RegWriteMode = 2'b01;
@@ -234,22 +239,13 @@ module control (
             end
 
             s12: begin // Shift
-                // ALUFunc = 'LSL or RSR';
-                // ALUSrcX = 1;
-                // ALUSrcY = 3;
-                // AluSel = 0;
-                // ZRegWrite = 1;
+                ALUSel = 2'b00;
+                ALUSrcX = 2'b01;
+                ALUSrcY = 2'b10;
+                ALUFunc = (opcode == 6'b011110) ? 4'b0011 : 4'b0010; // rsl lsl
 
-                next_state = s17;
-            end
-
-            s13: begin // UXTB
-                // ALUFunc = 'UXTB';
-                // ALUSrcX = 1;
-                // ALUSrcY = 3;
-                // AluSel = 0;
-                // ZRegWrite = 1;
-                next_state = s0;
+                ZRegWrite = 1;
+                next_state = s5;
             end
             s14: begin // CPY     
                 // ALUFunc = 'NOP, pass the source reg';
@@ -258,19 +254,24 @@ module control (
                 // ZRegWrite = 1;
                 next_state = s0;
             end
-            s15: begin // MULI    
-                next_state = s0;
+            s15: begin // MULI
+                ALUSel  = 2'b00;
+                ALUSrcX = 2'b01;
+                ALUSrcY = 2'b10;
+                ALUFunc = 4'b0100; // Multiply
+                ZRegWrite = 1;
+                next_state = s5;
             end
             s16: begin // BN      
                 next_state = s0;
             end
-            s17: begin // (WB)    
-
-                // RegDst = 1;
-                // RegInSrc = 1;
-                // RegWrite = 1;
-
-                next_state = s0;
+            s17: begin // MUL  
+                ALUSel = 2'b00;
+                ALUSrcX = 2'b01;
+                ALUSrcY = 2'b01;
+                ALUFunc = 4'b0100; // Multiply
+                ZRegWrite = 1;
+                next_state = s3;
             end
             s18: begin // BN_TRUE 
                 next_state = s0;

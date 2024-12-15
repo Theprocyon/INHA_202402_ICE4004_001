@@ -3,6 +3,8 @@
 ## Overview
 This project focuses on the design and implementation of a specialized CPU optimized for image processing tasks. The CPU includes custom datapath components and instructions tailored to enhance the performance of graphical computations while maintaining compatibility with general-purpose operations.
 
+![Datapath](res/datapath.png)
+
 ## Key Features
 - **Custom Instructions for Graphics Processing**
   - `GAVG9B`: Calculates the approximate average of 9 unsigned 8-bit values.

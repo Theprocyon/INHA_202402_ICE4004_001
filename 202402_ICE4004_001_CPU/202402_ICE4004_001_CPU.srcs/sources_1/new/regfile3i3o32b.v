@@ -41,7 +41,28 @@ module regfile3i3o32b (
     integer i;
     // 32 registers, each 32 bits wide
     reg [31:0] reg_file [31:0];
+    
+    integer j; // 루프 변수
+    integer logfile; // 파일 핸들
 
+    // 값이 변경될 때마다 모든 레지스터 값을 파일에 기록
+    always @(reg_file) begin
+        for (j = 0; j < 32; j = j + 1) begin
+            $fdisplay(logfile, "%0d : %h", j, reg_file[j]); // 레지스터 번호와 16진수 값 기록
+        end
+        $fdisplay(logfile, ""); // 줄 바꿈
+    end
+
+    // 테스트 및 초기화
+    initial begin
+        // 로그 파일 열기 (파일 이름: reg_file_log.txt, 쓰기 모드)
+        logfile = $fopen("reg_file_log.txt", "w");
+        if (logfile == 0) begin
+            $display("Error: Failed to open file.");
+            $stop;
+        end
+    end
+    
     // Read logic
     assign read_data1 = reg_file[read_addr1];
     assign read_data2 = reg_file[read_addr2];

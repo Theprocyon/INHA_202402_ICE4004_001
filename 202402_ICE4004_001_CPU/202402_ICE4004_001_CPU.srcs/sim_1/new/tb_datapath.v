@@ -52,7 +52,7 @@ initial begin
 
 
 
-    #200;
+    #800;
     $finish; 
 end
 
