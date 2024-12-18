@@ -3,7 +3,7 @@
 module datapath(
     input clk, 
     input rst,
-    output [4:0] state
+    output [5:0] state
     );
 
     //Control Signals

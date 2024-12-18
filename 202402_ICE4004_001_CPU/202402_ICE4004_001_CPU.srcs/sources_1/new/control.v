@@ -68,42 +68,47 @@ module control (
     output reg ZRegWrite,
     output reg [1:0] PCSrc, // 00 01 10 11
     
-    output [4:0] state
+    output [5:0] state
 );
 
     // Define FSM states
-    localparam s0  = 5'b00000; // Fetch                     //k//
-    localparam s1  = 5'b00001; // Decode                    //k//
-    localparam s2  = 5'b00010; // Execute ADD/SUB           //k//
-    localparam s3  = 5'b00011; // Write Back ADD/SUB        //k//
-    localparam s4  = 5'b00100; // Execute ADDI/SUBI         //k//
-    localparam s5  = 5'b00101; // Write Back ADDI/SUBI      //k//
-    localparam s6  = 5'b00110; // Execute STORE/LOAD        //k//
-    localparam s7  = 5'b00111; // Memory Write (STORE)      //k//
-    localparam s8  = 5'b01000; // Memory Read (LOAD)        //k//
-    localparam s9  = 5'b01001; // Write Back2 (LOAD)        //k//
-    localparam s10 = 5'b01010; // Execute MOVS              //k//
-    localparam s11 = 5'b01011; // Write Back MOVS           //k//
-    localparam s12 = 5'b01100; // Shift                     //p//
-    localparam s14 = 5'b01110; // CPY                       //p//
-    localparam s15 = 5'b01111; // MULI                      //p//
-    localparam s16 = 5'b10000; // BN                        //p//
-    localparam s17 = 5'b10001; // (WB)                      //p//
-    localparam s18 = 5'b10010; // BN_TRUE                   //p//
-    localparam s19 = 5'b10011; // BN_FALSE                  //p//
-    localparam s20 = 5'b10100; // Write Back1 (LOAD)        //s//
-    localparam s21 = 5'b10101; // GADD9B,GSUB9B,GAVG9B      //s//
-    localparam s22 = 5'b10110; // GADD9B,GSUB9B Ex          //s//
-    localparam s23 = 5'b10111; // GADD9B,GSUB9B Wb          //s//
-    localparam s24 = 5'b11000; // GAVG9B Ex                 //s//
-    localparam s25 = 5'b11001; // GAVG9B Wb                 //s//
-    localparam s26 = 5'b11010; // GLOAD, GSTORE F           //s//  unused
-    localparam s27 = 5'b11011; //                           //s//
-    localparam s28 = 5'b11100; //                           //s//
-    localparam s29 = 5'b11101; //                           //s//
-    localparam s30 = 5'b11110; //                           //s//
-
-    reg [4:0] current_state, next_state;
+    localparam s0  = 6'b000000; // Fetch                     //k//
+    localparam s1  = 6'b000001; // Decode                    //k//
+    localparam s2  = 6'b000010; // Execute ADD/SUB           //k//
+    localparam s3  = 6'b000011; // Write Back ADD/SUB        //k//
+    localparam s4  = 6'b000100; // Execute ADDI/SUBI         //k//
+    localparam s5  = 6'b000101; // Write Back ADDI/SUBI      //k//
+    localparam s6  = 6'b000110; // Execute STORE/LOAD        //k//
+    localparam s7  = 6'b000111; // Memory Write (STORE)      //k//
+    localparam s8  = 6'b001000; // Memory Read (LOAD)        //k//
+    localparam s9  = 6'b001001; // Write Back2 (LOAD)        //k//
+    localparam s10 = 6'b001010; // Execute MOVS              //k//
+    localparam s11 = 6'b001011; // Write Back MOVS           //k//
+    localparam s12 = 6'b001100; // Shift                     //p//
+    localparam s14 = 6'b001110; // CPY                       //p//
+    localparam s15 = 6'b001111; // MULI                      //p//
+    localparam s16 = 6'b010000; // BN                        //p//
+    localparam s17 = 6'b010001; // (WB)                      //p//
+    localparam s18 = 6'b010010; // BN_TRUE                   //p//
+    localparam s19 = 6'b010011; // BN_FALSE                  //p//
+    localparam s20 = 6'b010100; // Write Back1 (LOAD)        //s//
+    localparam s21 = 6'b010101; // GADD9B,GSUB9B,GAVG9B      //s//
+    localparam s22 = 6'b010110; // GADD9B,GSUB9B Ex          //s//
+    localparam s23 = 6'b010111; // GADD9B,GSUB9B Wb          //s//
+    localparam s24 = 6'b011000; // GAVG9B Ex                 //s//
+    localparam s25 = 6'b011001; // GAVG9B Wb                 //s//
+    localparam s26 = 6'b011010; // GLOAD, GSTORE F           //s//  unused
+    localparam s27 = 6'b011011; //                           //s//
+    localparam s28 = 6'b011100; //                           //s//
+    localparam s29 = 6'b011101; //                           //s//
+    localparam s30 = 6'b011110; //                           //s//
+    localparam s31 = 6'b011111; //                           //s//
+    localparam s32 = 6'b100000; //                           //s//
+    localparam s33 = 6'b100001; //                           //s//
+    localparam s34 = 6'b100010; //                           //s//
+    localparam s35 = 6'b100011; //                           //s//
+    
+    reg [5:0] current_state, next_state;
 
     // State transition logic
     always @(posedge clk or negedge reset) begin
@@ -325,19 +330,73 @@ module control (
                 RegDst = 1'b1; //rd
                 next_state = s0;
             end 
-            s26: begin// GLOAD, GSTORE F     
+            s26: begin// GLOAD, GSTORE F     //UNUSSED
                 next_state = s0;
             end 
-            s27:begin
-                next_state = s0;
+            s27:begin //GSTORE, GLOAD START
+                ALUSel = 2'b00;
+                ALUSrcX = 2'b10;
+                ALUSrcY = 2'b01;
+                ALUFunc = 4'b0000; //Pass the ALUSrcY Value
+                ZRegWrite = 1;
+                next_state = (opcode == 6'b100010) ? s28 : s32; //if GSTORE9B
             end
             s28:begin
-                next_state = s0;
+                RegWriteMode = 2'b10;
+                next_state = s29;
             end
             s29:begin
-                next_state = s0;
+                RegWriteMode = 2'b10;
+                MemWrite = 1'b1;
+                InstData = 2'b01;
+                DataSrcSel = 2'b10;
+                next_state = s30;
             end
             s30:begin
+                RegWriteMode = 2'b10;
+                MemWrite = 1'b1;
+                InstData = 2'b10;
+                DataSrcSel = 2'b01;
+                next_state = s31;
+            end
+            s31: begin //GSTORE END
+                RegWriteMode = 2'b10;
+                MemWrite = 1'b1;
+                InstData = 2'b11;
+                DataSrcSel = 2'b00;
+                next_state = s0;
+            end
+            s32: begin
+                InstData = 2'b01;
+                MemRead = 1'b1;
+                next_state = s33;
+            end
+            s33: begin
+                InstData = 2'b10;
+                MemRead = 1'b1;
+
+                RegWriteMode = 1'b1;
+                RegDst = 3'b010;
+                RegInSrc = 1'b0;
+
+                next_state = s34;
+            end
+            s34: begin
+                InstData = 2'b11;
+                MemRead = 1'b1;
+
+                RegWriteMode = 1'b1;
+                RegDst = 3'b011;
+                RegInSrc = 1'b0;
+
+                next_state = s35;
+            end
+            s35: begin
+
+                RegWriteMode = 1'b1;
+                RegDst = 3'b100;
+                RegInSrc = 1'b0;
+
                 next_state = s0;
             end
             default: begin
