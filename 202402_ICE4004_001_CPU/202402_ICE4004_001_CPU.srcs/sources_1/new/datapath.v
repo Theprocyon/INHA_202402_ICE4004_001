@@ -68,16 +68,17 @@ module datapath(
 
     // DataSrcSel Mux
 
-    wire [31:0] rs2_to_DataSrcSelMUX;
-    wire [31:0] rs1_to_DataSrcSelMUX;
-    wire [31:0] rs0_to_DataSrcSelMUX;
+    wire [31:0] rs0_Out;
+    wire [31:0] rs1_Out;
+    wire [31:0] rs2_Out;
+
 
     wire [31:0] DataSrcSelMUX_to_Cache;
 
     mux4_32 MUX_DataSrcSel(
-    .in0(rs2_to_DataSrcSelMUX),
-    .in1(rs1_to_DataSrcSelMUX),
-    .in2(rs0_to_DataSrcSelMUX),
+    .in0(rs2_Out),
+    .in1(rs1_Out),
+    .in2(rs0_Out),
     .in3(32'h0000),
     .sel(DataSrcSel),
     .out(DataSrcSelMUX_to_Cache)
@@ -196,7 +197,6 @@ module datapath(
 
     //rs0
 
-    wire [31:0] rs0_Out;
 
     reg32 Reg_rs0 (
         .clk(clk),
@@ -207,8 +207,6 @@ module datapath(
     );
 
     //rs1
-
-    wire [31:0] rs1_Out;
 
     reg32 Reg_rs1 (
         .clk(clk),
@@ -221,7 +219,6 @@ module datapath(
 
     //rs2
 
-    wire [31:0] rs2_Out;
 
     reg32 Reg_rs2 (
         .clk(clk),

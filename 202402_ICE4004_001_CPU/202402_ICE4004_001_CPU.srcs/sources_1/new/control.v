@@ -28,7 +28,7 @@ module control (
     //k// ADD           : 6'b000000 (0)     implemented
     //k// SUB           : 6'b000001 (1)     implemented
     //p// CMP           : 6'b000010 (2)     .
-    //p// MUL           : 6'b000011 (3)     .
+    //p// MUL           : 6'b000011 (3)     implemented
     //p// BN            : 6'b010000 (16)    .
     //p// BEQ           : 6'b010001 (17)    .
     //k// ADDI          : 6'b011000 (24)    implemented
@@ -38,7 +38,7 @@ module control (
     //k// MOVS          : 6'b011100 (28)    .
     //p// LSL           : 6'b011101 (29)    implemented
     //p// RSL           : 6'b011110 (30)    implemented
-    //p// MULI          : 6'b011111 (31)    .
+    //p// MULI          : 6'b011111 (31)    implemented
     //s// GADD9B        : 6'b100000 (32)    .
     //s// GSUB9B        : 6'b100001 (33)    .
     //s// GSTORE9B      : 6'b100010 (34)    .
@@ -82,7 +82,7 @@ module control (
     localparam s6  = 5'b00110; // Execute STORE/LOAD        //k//
     localparam s7  = 5'b00111; // Memory Write (STORE)      //k//
     localparam s8  = 5'b01000; // Memory Read (LOAD)        //k//
-    localparam s9  = 5'b01001; // Write Back (LOAD)         //k//
+    localparam s9  = 5'b01001; // Write Back2 (LOAD)        //k//
     localparam s10 = 5'b01010; // Execute MOVS              //k//
     localparam s11 = 5'b01011; // Write Back MOVS           //k//
     localparam s12 = 5'b01100; // Shift                     //p//
@@ -92,6 +92,7 @@ module control (
     localparam s17 = 5'b10001; // (WB)                      //p//
     localparam s18 = 5'b10010; // BN_TRUE                   //p//
     localparam s19 = 5'b10011; // BN_FALSE                  //p//
+    localparam s20 = 5'b10011; // Write Back1 (LOAD)        //s//
 
     reg [4:0] current_state, next_state;
 
@@ -157,6 +158,7 @@ module control (
                     6'b011111           : next_state = s15; // MULI
                     6'b000011           : next_state = s17; // MUL
                     6'b011100           : next_state = s10; // Execute MOVS
+                    6'b011010           : next_state = s6;
                     default: next_state = s0;               // Default: FETCH
                 endcase
             end
@@ -193,32 +195,36 @@ module control (
                 next_state = s0;
             end
 
-            s6: begin // Execute STORE/LOAD
-                // ALUSrcX = 2'b01;
-                // ALUSrcY = 2'b10;
-                // ALUFunc = 2'b00; // ADD(00)
-                // ALUSel = 2'b00;
-                // ZRegWrite = 1;
-                next_state = (opcode == 6'b011010) ? s7 : s8; // 6'b011010: STORE
+            s6: begin // Execute STORE/LOAD 241218 shs
+                ALUFunc = 4'b0000; // ADD(00)
+                ALUSel = 2'b00;
+                ALUSrcX = 2'b01;
+                ALUSrcY = 2'b10;
+                ZRegWrite = 1;
+                next_state = (opcode == 6'b011011) ? s7 : s8; // 6'b011011: STORE
             end
 
             s7: begin // Memory Write (STORE)
-                // InstData = 2'b01;
-                // MemWrite = 1;
-                // DataSrcSel = 2'b00;
+                InstData = 2'b01;
+                MemWrite = 1'b1;
+                DataSrcSel = 2'b00;
                 next_state = s0;
             end
 
             s8: begin // Memory Read (LOAD)
-                // InstData = 2'b01;
-                // MemWrite = 1;
+                InstData = 2'b01;
+                MemRead = 1;
                 next_state = s9;
             end
 
-            s9: begin // Write Back (LOAD)
-                // RegDst = 3'b000;
-                // RegInSrc = 2'b00;
-                // RegWriteMode = 2'b01;
+            s20: begin //Write Back1 (LOAD)
+                next_state = s9;
+            end
+
+            s9: begin // Write Back2 (LOAD)
+                RegDst = 3'b000;
+                RegInSrc = 1'b0;
+                RegWriteMode = 2'b01;
                 next_state = s0;
             end
 

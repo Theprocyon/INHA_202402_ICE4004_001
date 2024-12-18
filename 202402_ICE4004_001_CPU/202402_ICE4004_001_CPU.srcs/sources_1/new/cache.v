@@ -17,8 +17,9 @@ module cache (
 
     initial begin
         $readmemb("Insts.mem", registers);
+        $monitor("Time: %0t | write_enable : %h |address_trunc: %h | write_data: %h ", $time, write_enable,address_trunc, write_data);
     end
-
+    
     always @(posedge clk) begin
         if (write_enable) begin
             registers[address_trunc] <= write_data;  // Write operation
