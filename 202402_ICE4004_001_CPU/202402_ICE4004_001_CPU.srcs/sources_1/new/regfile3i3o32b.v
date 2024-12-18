@@ -47,7 +47,7 @@ module regfile3i3o32b (
 
     // 값이 변경될 때마다 모든 레지스터 값을 파일에 기록
     always @(reg_file) begin
-        for (j = 0; j < 32; j = j + 1) begin
+        for (j = 0; j < 16; j = j + 1) begin
             $fdisplay(logfile, "%0d : %h", j, reg_file[j]); // 레지스터 번호와 16진수 값 기록
         end
         $fdisplay(logfile, ""); // 줄 바꿈

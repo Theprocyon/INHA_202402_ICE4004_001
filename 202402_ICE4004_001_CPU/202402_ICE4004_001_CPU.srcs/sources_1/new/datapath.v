@@ -368,9 +368,9 @@ module datapath(
         .q(ZReg_Out)
     );
 
-    initial begin
-        $monitor("outregs x : %h , y : %h , z : %h ", xreg_out, yreg_out, ZReg_Out);
-    end
+    //initial begin
+        //$monitor("outregs x : %h , y : %h , z : %h ", xreg_out, yreg_out, ZReg_Out);
+    //end
 
 
     //MUX_PCSrc

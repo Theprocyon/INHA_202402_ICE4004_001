@@ -139,7 +139,7 @@ module control (
         GADDSUB = 0;
         ZRegWrite = 0;
         PCSrc = 2'b00;
-        $display("Current controller state : %d", current_state);
+        //$display("Current controller state : %d", current_state);
 
         case (current_state)
             s0: begin // Fetch
