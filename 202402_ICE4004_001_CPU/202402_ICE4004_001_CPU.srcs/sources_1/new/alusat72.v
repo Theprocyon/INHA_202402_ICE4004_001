@@ -29,6 +29,6 @@ module alusat72(
     // end
 
     // Concatenate results to form 72-bit output
-    assign result = {res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7], res[8]};
+    assign result = {res[8], res[7], res[6], res[5], res[4], res[3], res[2], res[1], res[0]};
 
 endmodule
