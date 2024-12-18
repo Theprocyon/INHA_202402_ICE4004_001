@@ -45,7 +45,6 @@ module control (
     //s// GLOAD9B       : 6'b100011 (35)    .
     //s// GAVG9B        : 6'b100100 (36)    .
 
-
     
     output reg [1:0] DataSrcSel, // 00 01 10
     output reg PCWrite,
@@ -92,7 +91,17 @@ module control (
     localparam s17 = 5'b10001; // (WB)                      //p//
     localparam s18 = 5'b10010; // BN_TRUE                   //p//
     localparam s19 = 5'b10011; // BN_FALSE                  //p//
-    localparam s20 = 5'b10011; // Write Back1 (LOAD)        //s//
+    localparam s20 = 5'b10100; // Write Back1 (LOAD)        //s//
+    localparam s21 = 5'b10101; // GADD9B,GSUB9B,GAVG9B      //s//
+    localparam s22 = 5'b10110; // GADD9B,GSUB9B Ex          //s//
+    localparam s23 = 5'b10111; // GADD9B,GSUB9B Wb          //s//
+    localparam s24 = 5'b11000; // GAVG9B Ex                 //s//
+    localparam s25 = 5'b11001; // GAVG9B Wb                 //s//
+    localparam s26 = 5'b11010; // GLOAD, GSTORE F           //s//  unused
+    localparam s27 = 5'b11011; //                           //s//
+    localparam s28 = 5'b11100; //                           //s//
+    localparam s29 = 5'b11101; //                           //s//
+    localparam s30 = 5'b11110; //                           //s//
 
     reg [4:0] current_state, next_state;
 
@@ -151,15 +160,20 @@ module control (
                 // STORE: 6'b011011 (27)
                 // MOVS: 6'b011100 (28)
                 case (opcode)
-                    6'b000000, 6'b000001: next_state = s2;  // Execute ADD/SUB
-                    6'b011000, 6'b011001: next_state = s4;  // Execute ADDI/SUBI
-                    6'b011010, 6'b011011: next_state = s6;  // Execute STORE/LOAD
-                    6'b011101, 6'b011110: next_state = s12; // LSL, LSR
-                    6'b011111           : next_state = s15; // MULI
-                    6'b000011           : next_state = s17; // MUL
-                    6'b011100           : next_state = s10; // Execute MOVS
-                    6'b011010           : next_state = s6;
-                    default: next_state = s0;               // Default: FETCH
+                    6'b000000, 6'b000001            : next_state = s2;  // Execute ADD/SUB
+                    6'b011000, 6'b011001            : next_state = s4;  // Execute ADDI/SUBI
+                    6'b011010, 6'b011011            : next_state = s6;  // Execute STORE/LOAD
+                    6'b011101, 6'b011110            : next_state = s12; // LSL, LSR
+                    6'b011111                       : next_state = s15; // MULI
+                    6'b000011                       : next_state = s17; // MUL
+                    6'b011100                       : next_state = s10; // Execute MOVS
+                    6'b011010                       : next_state = s6;
+                    6'b100000, 6'b100001, 6'b100100 : begin             // GADD9B, GSUB9B, GAVG9B
+                        RegWriteMode = 2'b10;
+                        next_state = (opcode == 6'b100100) ? s24: s22;
+                    end
+                    6'b100010, 6'b100011            : next_state = s27;
+                    default: next_state = s0;                           // Default: FETCH
                 endcase
             end
 
@@ -286,6 +300,46 @@ module control (
                 next_state = s0;
             end
 
+            s21: begin// GADD9B,GSUB9B,GAVG9B unused
+                next_state = s0;                
+            end 
+            s22: begin// GADD9B,GSUB9B Ex    
+                GADDSUB = (opcode == 6'b100000) ? 1'b0 : 1'b1;
+                ZRegWrite = 1'b1;
+                ALUSel = 2'b10;
+                next_state = s23;
+            end 
+            s23: begin// GADD9B,GSUB9B Wb  
+                RegWriteMode = 2'b11;
+                RegInSrc = 1'b1;
+                next_state = s0;
+            end 
+            s24: begin// GAVG9B Ex       
+                ALUSel = 2'b01;
+                ZRegWrite = 1'b1;
+                next_state = s25;
+            end 
+            s25: begin// GAVG9B Wb
+                RegWriteMode = 2'b01;
+                RegInSrc = 1'b1;
+                RegDst = 1'b1; //rd
+                next_state = s0;
+            end 
+            s26: begin// GLOAD, GSTORE F     
+                next_state = s0;
+            end 
+            s27:begin
+                next_state = s0;
+            end
+            s28:begin
+                next_state = s0;
+            end
+            s29:begin
+                next_state = s0;
+            end
+            s30:begin
+                next_state = s0;
+            end
             default: begin
                 next_state = s0;
             end

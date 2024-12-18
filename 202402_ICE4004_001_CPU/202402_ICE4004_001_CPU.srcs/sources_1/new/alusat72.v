@@ -23,6 +23,11 @@ module alusat72(
         end
     endgenerate
 
+
+    // initial begin
+    //     $monitor(" a : %h | b : %h | mode : %h | res : %h",a,b,mode,result );
+    // end
+
     // Concatenate results to form 72-bit output
     assign result = {res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7], res[8]};
 

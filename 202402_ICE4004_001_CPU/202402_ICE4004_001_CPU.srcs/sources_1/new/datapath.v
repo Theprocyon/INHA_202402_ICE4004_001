@@ -233,9 +233,11 @@ module datapath(
     //9 * 8bit saturating adder, subtractor
 
     wire [71:0] alusat_a;
+    wire [7:0]  imm_trunc8;
 
     assign alusat_a     = {rs0_Out, rs1_Out, rs2_Out[7:0]};
     assign imm_trunc8   = imm[7:0];
+
 
     wire [71:0] alusat_out;
 
@@ -245,7 +247,12 @@ module datapath(
 
     assign alusat_out_x = alusat_out[71:40];
     assign alusat_out_y = alusat_out[39:8];
-    assign alusat_out_z = alusat_out[7:0];
+    assign alusat_out_z = {24'b0, alusat_out[7:0]};
+
+        
+    // initial begin
+    //     $monitor("imm_trunc8 : %h", imm_trunc8);    
+    // end
 
     alusat72 ALU_Sat72(
         .a(alusat_a),
@@ -360,6 +367,10 @@ module datapath(
         .d(ALUSel_out),
         .q(ZReg_Out)
     );
+
+    initial begin
+        $monitor("outregs x : %h , y : %h , z : %h ", xreg_out, yreg_out, ZReg_Out);
+    end
 
 
     //MUX_PCSrc
